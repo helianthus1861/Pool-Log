@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#111111">
+<link rel="manifest" href="manifest.json">
+<title>🎱 Pool Log</title>
+<style>
+:root{--bg:#101010;--card:#1b1b1b;--card2:#242424;--text:#fff;--muted:#9b9b9b;--accent:#2d6cdf;--good:#2e9b59;--bad:#8f3030}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
+.app{max-width:560px;margin:auto;padding:14px 14px 32px}.top{display:flex;justify-content:space-between;align-items:center}
+h1{font-size:28px;margin:4px 0}.version{font-size:11px;color:#777}
+.card{background:var(--card);border-radius:18px;padding:15px;margin:11px 0}.tabs{display:flex;gap:7px;overflow:auto;margin:8px 0}
+button,input,select{font:inherit}button{border:0;border-radius:13px;padding:12px;color:#fff;background:var(--card2);font-weight:750;touch-action:manipulation}
+button:active{transform:scale(.97)}button.primary{background:var(--accent)}button.good{background:var(--good)}button.bad{background:var(--bad)}
+button.active{background:#fff;color:#111}.tab{flex:1;min-width:90px}.big{width:100%;font-size:31px;padding:28px 8px;margin:11px 0}
+.row{display:flex;gap:8px}.row>*{flex:1}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+input,select{width:100%;padding:12px;border:1px solid #444;border-radius:12px;background:#111;color:#fff}
+.stat{text-align:center;padding:9px}.num{font-size:25px;font-weight:850}.label{font-size:11px;color:var(--muted);text-transform:uppercase}
+.muted{color:var(--muted)}.hidden{display:none!important}.session{border-top:1px solid #333;padding:12px 0}.pill{display:inline-block;padding:4px 8px;border-radius:99px;background:#303030;font-size:12px;margin:2px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#fff;color:#111;padding:11px 15px;border-radius:12px;font-weight:700;display:none;z-index:10}
+h2{margin:3px 0 12px;font-size:19px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><h1>🎱 POOL LOG</h1><span class="version">V3</span></div>
+  <div class="tabs">
+    <button class="tab active" data-tab="play">PLAY</button>
+    <button class="tab" data-tab="stats">STATS</button>
+    <button class="tab" data-tab="history">HISTORY</button>
+    <button class="tab" data-tab="practice">PRACTICE</button><button class="tab" data-tab="money">MONEY</button><button class="tab" data-tab="settings">SETTINGS</button>
+  </div>
+
+  <section id="play">
+    <div class="card">
+      <input id="venue" value="HWY Bar" placeholder="Venue">
+      <div class="row" style="margin-top:8px">
+        <button id="eight" class="active">8-BALL</button><button id="nine">9-BALL</button>
+      </div>
+      <div class="muted" style="margin-top:10px">Session: <span id="status">Not started</span></div>
+      <button id="rack" class="big primary">+ RACK</button>
+      <div class="row">
+        <button id="win" class="good">🏆 WIN</button><button id="loss" class="bad">LOSS</button>
+      </div>
+      <div class="row" style="margin-top:9px">
+        <button id="undo">↩ UNDO</button><button id="start">START</button><button id="end">SAVE</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="grid">
+        <div class="stat"><div class="num" id="sracks">0</div><div class="label">Racks</div></div>
+        <div class="stat"><div class="num" id="swins">0</div><div class="label">Wins</div></div>
+        <div class="stat"><div class="num" id="slosses">0</div><div class="label">Losses</div></div>
+        <div class="stat"><div class="num" id="scost">$0</div><div class="label">Cost</div></div>
+      </div>
+      <div style="text-align:center;margin-top:7px">⏱ <span id="stime">0:00</span> · <span id="srph">0.0</span> racks/hr</div>
+    </div>
+  </section>
+
+  <section id="stats" class="hidden">
+    <div class="card"><h2>Career</h2><div class="grid">
+      <div class="stat"><div class="num" id="tr">0</div><div class="label">Racks</div></div>
+      <div class="stat"><div class="num" id="ts">0</div><div class="label">Sessions</div></div>
+      <div class="stat"><div class="num" id="th">0</div><div class="label">Hours</div></div>
+      <div class="stat"><div class="num" id="tm">$0</div><div class="label">Spent</div></div>
+    </div></div>
+    <div class="card"><h2>Game stats</h2><div class="grid">
+      <div class="stat"><div class="num" id="t8">0</div><div class="label">8-Ball</div></div>
+      <div class="stat"><div class="num" id="t9">0</div><div class="label">9-Ball</div></div>
+      <div class="stat"><div class="num" id="tw">0</div><div class="label">Wins</div></div>
+      <div class="stat"><div class="num" id="tl">0</div><div class="label">Losses</div></div>
+    </div></div>
+    <div class="card"><h2>Milestones</h2><div id="badges"></div></div>
+  </section>
+
+  <section id="history" class="hidden">
+    <div class="card"><h2>Sessions</h2><div id="historyList" class="muted">No sessions yet.</div></div>
+  </section>
+
+  
+<section id="practice" class="hidden">
+  <div class="card"><h2>🎯 Quick Practice</h2>
+    <p class="muted">Track reps without interrupting your session.</p>
+    <div class="grid">
+      <button onclick="practice('Stop shots')">STOP SHOTS<br><span id="p-stop">0</span></button>
+      <button onclick="practice('Draw')">DRAW<br><span id="p-draw">0</span></button>
+      <button onclick="practice('Follow')">FOLLOW<br><span id="p-follow">0</span></button>
+      <button onclick="practice('Banks')">BANKS<br><span id="p-banks">0</span></button>
+      <button onclick="practice('Kicks')">KICKS<br><span id="p-kicks">0</span></button>
+      <button onclick="practice('Breaks')">BREAKS<br><span id="p-breaks">0</span></button>
+    </div>
+  </div>
+</section>
+<section id="money" class="hidden">
+  <div class="card"><h2>💰 Hobby Money</h2><div class="grid">
+    <div class="stat"><div class="num" id="mplay">$0</div><div class="label">Playing</div></div>
+    <div class="stat"><div class="num" id="mequip">$0</div><div class="label">Equipment</div></div>
+    <div class="stat"><div class="num" id="mall">$0</div><div class="label">Total</div></div>
+    <div class="stat"><div class="num" id="mcpr">$0</div><div class="label">Cost/Rack</div></div>
+  </div></div>
+  <div class="card"><h2>Add expense</h2>
+    <input id="expenseName" placeholder="Cue, chalk, case, etc.">
+    <div class="row" style="margin-top:8px"><input id="expenseAmount" type="number" step=".01" min="0" placeholder="$ amount"><button id="addExpense" class="primary">ADD</button></div>
+  </div>
+  <div class="card"><h2>Equipment expenses</h2><div id="expenseList" class="muted">None yet.</div></div>
+</section>
+<section id="settings" class="hidden">
+    <div class="card"><h2>Venue pricing</h2>
+      <p class="muted">Set the normal playing cost. HWY defaults to $1 per rack. Hourly venues can be entered as a flat session cost for now.</p>
+      <div id="venues"></div>
+      <button id="addVenue" class="primary" style="width:100%;margin-top:10px">+ ADD VENUE</button>
+    </div>
+    <div class="card"><h2>Backup & safety</h2>
+      <div class="row"><button id="backup">💾 BACKUP</button><button id="restore">♻ RESTORE</button></div>
+      <input id="file" type="file" accept=".json,application/json" class="hidden">
+      <button id="wipe" class="bad" style="width:100%;margin-top:10px">DELETE ALL DATA</button>
+    </div>
+  </section>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+const KEY="poolLogV2";
+const fresh={version:2,sessions:[],venues:{ "HWY Bar":{mode:"rack",rate:1} }};
+let db=JSON.parse(localStorage.getItem(KEY)||"null")||fresh;
+if(!db.version)db.version=2;if(!db.sessions)db.sessions=[];if(!db.venues)db.venues=fresh.venues;
+let session=null,type="8-ball",history=[];
+const $=id=>document.getElementById(id);
+const money=n=>"$"+Number(n||0).toFixed(2).replace(".00","");
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function toast(t){$("toast").textContent=t;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",1300)}
+function fmt(sec){sec=Math.max(0,Math.floor(sec));let h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return h?`${h}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`:`${m}:${String(s).padStart(2,"0")}`}
+function render(){
+ let r=session?.racks||0,w=session?.wins||0,l=session?.losses||0;
+ $("sracks").textContent=r;$("swins").textContent=w;$("slosses").textContent=l;
+ let venue=session?.venue||$("venue").value.trim()||"HWY Bar",v=db.venues[venue]||{mode:"rack",rate:1};
+ $("scost").textContent=money(v.mode==="rack"?r*v.rate:(session?.cost||0));
+ let sec=session?Math.floor((Date.now()-session.start)/1000):0;
+ $("stime").textContent=fmt(sec);$("srph").textContent=sec?((r/sec)*3600).toFixed(1):"0.0";
+ $("status").textContent=session?`Playing at ${session.venue}`:"Not started";
+ renderStats();renderHistory();renderVenues();
+}
+function renderStats(){
+ let a=db.sessions.reduce((x,s)=>{x.r+=s.racks;x.w+=s.wins;x.l+=s.losses;x.h+=s.seconds;x.m+=s.cost;x.e+=s.eight;x.n+=s.nine;return x},{r:0,w:0,l:0,h:0,m:0,e:0,n:0});
+ $("tr").textContent=a.r;$("ts").textContent=db.sessions.length;$("th").textContent=(a.h/3600).toFixed(1);$("tm").textContent=money(a.m);
+ $("t8").textContent=a.e;$("t9").textContent=a.n;$("tw").textContent=a.w;$("tl").textContent=a.l;
+ let marks=[10,25,50,100,250,500,1000,2500],names=["First 10 racks","25 Rack Club","50 Rack Club","100 Rack Club","250 Rack Club","500 Rack Club","1,000 Rack Club","2,500 Rack Club"];
+ $("badges").innerHTML=marks.map((n,i)=>`<span class="pill">${a.r>=n?"🏆":"🔒"} ${names[i]}</span>`).join(" ");
+}
+function renderHistory(){
+ if(!db.sessions.length){$("historyList").textContent="No sessions yet.";return}
+ $("historyList").innerHTML=db.sessions.slice().reverse().map(s=>`<div class="session">
+ <b>${s.date}</b> · ${s.venue}<br><span class="pill">${s.racks} racks</span><span class="pill">${s.eight} 8B</span><span class="pill">${s.nine} 9B</span><span class="pill">${s.wins}W / ${s.losses}L</span><br>
+ <span class="muted">${fmt(s.seconds)} · ${money(s.cost)}</span>
+ <div class="row" style="margin-top:8px"><button onclick="editSession('${s.id}')">EDIT</button><button class="bad" onclick="deleteSession('${s.id}')">DELETE</button></div>
+ </div>`).join("");
+}
+function renderVenues(){
+ $("venues").innerHTML=Object.entries(db.venues).map(([name,v])=>`<div class="card" style="margin:8px 0;padding:10px">
+ <input value="${name.replaceAll('"','&quot;')}" data-old="${name.replaceAll('"','&quot;')}" class="vname">
+ <div class="row" style="margin-top:7px"><select class="vmode"><option value="rack" ${v.mode==="rack"?"selected":""}>Per rack</option><option value="session" ${v.mode==="session"?"selected":""}>Flat session</option></select><input class="vrate" type="number" step=".01" min="0" value="${v.rate}"></div>
+ </div>`).join("");
+ document.querySelectorAll(".vname").forEach(e=>e.onchange=()=>{let old=e.dataset.old,n=e.value.trim()||old;if(old!==n){db.venues[n]=db.venues[old];delete db.venues[old];save();render()}});
+ document.querySelectorAll(".vmode").forEach(e=>e.onchange=()=>{let card=e.closest(".card"),name=card.querySelector(".vname").value;db.venues[name].mode=e.value;save();render()});
+ document.querySelectorAll(".vrate").forEach(e=>e.onchange=()=>{let name=e.closest(".card").querySelector(".vname").value;db.venues[name].rate=Math.max(0,Number(e.value)||0);save();render()});
+}
+function start(){if(session)return toast("Already playing");let venue=$("venue").value.trim()||"HWY Bar";if(!db.venues[venue])db.venues[venue]={mode:"rack",rate:1};session={id:crypto.randomUUID(),venue,start:Date.now(),racks:0,wins:0,losses:0,eight:0,nine:0,events:[]};render()}
+function rack(){if(!session)return toast("Tap START first");session.events.push({r:1,t:type});session.racks++;type==="8-ball"?session.eight++:session.nine++;render()}
+function result(kind){if(!session)return toast("Tap START first");session.events.push({result:kind});kind==="win"?session.wins++:session.losses++;render()}
+function undo(){if(!session||!session.events.length)return;let e=session.events.pop();if(e.r){session.racks--;e.t==="8-ball"?session.eight--:session.nine--}else e.result==="win"?session.wins--:session.losses--;render();toast("Undone")}
+function costFor(s){let v=db.venues[s.venue]||{mode:"rack",rate:1};return v.mode==="rack"?s.racks*v.rate:v.rate}
+$("start").onclick=start;$("rack").onclick=rack;$("win").onclick=()=>result("win");$("loss").onclick=()=>result("loss");$("undo").onclick=undo;
+$("eight").onclick=()=>{type="8-ball";$("eight").classList.add("active");$("nine").classList.remove("active")};
+$("nine").onclick=()=>{type="9-ball";$("nine").classList.add("active");$("eight").classList.remove("active")};
+$("end").onclick=()=>{if(!session)return toast("No active session");let sec=Math.floor((Date.now()-session.start)/1000);let s={...session,seconds:sec,date:new Date().toLocaleString()};s.cost=costFor(s);delete s.events;db.sessions.push(s);save();session=null;render();toast("Session saved!")};
+window.deleteSession=id=>{if(confirm("Delete this session?")){db.sessions=db.sessions.filter(s=>s.id!==id);save();render()}};
+window.editSession=id=>{let s=db.sessions.find(x=>x.id===id);if(!s)return;let v=prompt("Venue",s.venue);if(v===null)return;let r=prompt("Racks",s.racks);if(r===null)return;let w=prompt("Wins",s.wins);if(w===null)return;let l=prompt("Losses",s.losses);if(l===null)return;let mins=prompt("Minutes played",Math.round(s.seconds/60));if(mins===null)return;s.venue=v.trim()||s.venue;s.racks=Math.max(0,+r||0);s.wins=Math.max(0,+w||0);s.losses=Math.max(0,+l||0);s.seconds=Math.max(0,+mins||0)*60;s.cost=costFor(s);save();render();toast("Edited")};
+$("addVenue").onclick=()=>{let n=prompt("Venue name");if(n){n=n.trim();if(!db.venues[n])db.venues[n]={mode:"rack",rate:1};save();render()}};
+$("backup").onclick=()=>{let blob=new Blob([JSON.stringify(db,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`PoolLog_Backup_${new Date().toISOString().slice(0,10)}.json`;a.click();URL.revokeObjectURL(a.href);toast("Backup created")};
+$("restore").onclick=()=>$("file").click();
+$("file").onchange=e=>{let f=e.target.files[0];if(!f)return;let rd=new FileReader();rd.onload=()=>{try{let x=JSON.parse(rd.result);if(!Array.isArray(x.sessions)||!x.venues)throw 0;if(confirm("Replace current data with this backup?")){db=x;save();render();toast("Restored")}}catch{alert("Invalid Pool Log backup.")}e.target.value=""};rd.readAsText(f)};
+$("wipe").onclick=()=>{if(confirm("DELETE ALL POOL DATA? Make a backup first.")){db={...fresh,sessions:[]};save();render();toast("All data deleted")}};
+document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{document.querySelectorAll("section").forEach(s=>s.classList.add("hidden"));$(b.dataset.tab).classList.remove("hidden");document.querySelectorAll("[data-tab]").forEach(x=>x.classList.remove("active"));b.classList.add("active");render()});
+
+if(!db.practice)db.practice={};
+if(!db.expenses)db.expenses=[];
+function practice(k){db.practice[k]=(db.practice[k]||0)+1;save();renderV3();toast(k+" +1")}
+function renderV3(){
+ const map={"Stop shots":"p-stop","Draw":"p-draw","Follow":"p-follow","Banks":"p-banks","Kicks":"p-kicks","Breaks":"p-breaks"};
+ Object.entries(map).forEach(([k,id])=>{if($(id))$(id).textContent=db.practice[k]||0});
+ let playing=db.sessions.reduce((n,s)=>n+(+s.cost||0),0), equip=db.expenses.reduce((n,e)=>n+(+e.amount||0),0);
+ $("mplay").textContent=money(playing);$("mequip").textContent=money(equip);$("mall").textContent=money(playing+equip);
+ let racks=db.sessions.reduce((n,s)=>n+(+s.racks||0),0);$("mcpr").textContent=money(racks?playing/racks:0);
+ $("expenseList").innerHTML=db.expenses.length?db.expenses.slice().reverse().map(e=>`<div class="session"><b>${e.name}</b> — ${money(e.amount)}<br><span class="muted">${e.date}</span> <button onclick="deleteExpense('${e.id}')">DELETE</button></div>`).join(""):"None yet.";
+}
+window.deleteExpense=id=>{db.expenses=db.expenses.filter(e=>e.id!==id);save();renderV3()};
+$("addExpense").onclick=()=>{let name=$("expenseName").value.trim(),amount=Number($("expenseAmount").value);if(!name||amount<=0)return toast("Enter item and amount");db.expenses.push({id:crypto.randomUUID(),name,amount,date:new Date().toLocaleDateString()});$("expenseName").value="";$("expenseAmount").value="";save();renderV3();toast("Expense added")};
+setInterval(()=>{render();renderV3()},1000);render();renderV3();
+</script>
+<script>if("serviceWorker" in navigator) addEventListener("load",()=>navigator.serviceWorker.register("./service-worker.js"));</script>
+</body></html>
